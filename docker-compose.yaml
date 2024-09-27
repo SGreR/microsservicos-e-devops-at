@@ -1,0 +1,86 @@
+services:
+
+  eureka-server:
+    image: eureka-server:latest
+    container_name: eureka-server
+    build:
+      context: ./eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - eureka-net
+
+
+  veiculos-service:
+    image: veiculos-service:latest
+    container_name: veiculos-service
+    restart: always
+    build:
+      context: ./veiculos-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eureka-server
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:mem:testdb
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=password
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFERIPADDRESS=true
+    networks:
+      - eureka-net
+
+  status-service:
+    image: status-service:latest
+    container_name: status-service
+    restart: always
+    build:
+      context: ./status-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - eureka-server
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFERIPADDRESS=true
+    networks:
+      - eureka-net
+
+  produto-service:
+    image: produto-service:latest
+    container_name: produto-service
+    restart: always
+    build:
+      context: ./produto-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - eureka-server
+    environment:
+      - SPRING_DATASOURCE_URL=r2dbc:h2:mem:///testdb
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=password
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFERIPADDRESS=true
+    networks:
+      - eureka-net
+
+  clima-service:
+    image: clima-service:latest
+    container_name: clima-service
+    restart: always
+    build:
+      context: ./clima-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - eureka-server
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - EUREKA_INSTANCE_PREFERIPADDRESS=true
+    networks:
+      - eureka-net
+
+networks:
+  eureka-net:
+    driver: bridge

@@ -1,0 +1,214 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eureka-server
+spec:
+  selector:
+    matchLabels:
+      app: eureka-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: eureka-server
+    spec:
+      containers:
+        - name: eureka-server
+          image: eureka-server:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8761
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka-server-service
+spec:
+  ports:
+    - port: 8761
+      targetPort: 8761
+      nodePort: 31000
+  type: NodePort
+  selector:
+    app: eureka-server
+
+---
+
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: veiculo-service-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: veiculo-service
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: veiculos-service
+spec:
+  selector:
+    matchLabels:
+      app: veiculos-service
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: veiculos-service
+    spec:
+      containers:
+        - name: veiculos-service
+          image: veiculos-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: EUREKA_SERVER_URI
+              value: "http://eureka-server:8761/eureka/"
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:h2:mem:testdb"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "sa"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "password"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: veiculos-service
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 31001
+  selector:
+    app: veiculos-service
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: status-service
+spec:
+  selector:
+    matchLabels:
+      app: status-service
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: status-service
+    spec:
+      containers:
+        - name: status-service
+          image: status-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          env:
+            - name: EUREKA_SERVER_URI
+              value: "http://eureka-server:8761/eureka/"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: status-service
+spec:
+  type: NodePort
+  ports:
+    - port: 8081
+      targetPort: 8081
+      nodePort: 31002
+  selector:
+    app: status-service
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: produto-service
+spec:
+  selector:
+    matchLabels:
+      app: produto-service
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: produto-service
+    spec:
+      containers:
+        - name: produto-service
+          image: produto-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8082
+          env:
+            - name: EUREKA_SERVER_URI
+              value: "http://eureka-server:8761/eureka/"
+            - name: SPRING_DATASOURCE_URL
+              value: "r2dbc:h2:mem:///testdb"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "sa"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "password"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: produto-service
+spec:
+  type: NodePort
+  ports:
+    - port: 8082
+      targetPort: 8082
+      nodePort: 31003
+  selector:
+    app: produto-service
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clima-service
+spec:
+  selector:
+    matchLabels:
+      app: clima-service
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: clima-service
+    spec:
+      containers:
+        - name: clima-service
+          image: clima-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8083
+          env:
+            - name: EUREKA_SERVER_URI
+              value: "http://eureka-server:8761/eureka/"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clima-service
+spec:
+  type: NodePort
+  ports:
+    - port: 8083
+      targetPort: 8083
+      nodePort: 31004
+  selector:
+    app: clima-service
